@@ -1,6 +1,11 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { Form, useActionData, useLoaderData } from "@remix-run/react";
+import {
+  Form,
+  useActionData,
+  useLoaderData,
+  useNavigation,
+} from "@remix-run/react";
 
 import invariant from "tiny-invariant";
 
@@ -39,12 +44,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       await deletePost(slug);
       return redirect("/posts/admin");
     case intent === "update":
-      return await editPost(oldSlug, { title, slug, markdown });
+      await editPost(oldSlug, { title, slug, markdown });
+      return null;
     default:
       break;
   }
-
-  return redirect("/posts/admin");
 };
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
@@ -62,6 +66,11 @@ const inputClassName =
 export default function PostSlug() {
   const { post } = useLoaderData<typeof loader>();
   const errors = useActionData<typeof action>();
+
+  const navigation = useNavigation();
+
+  const isUpdating = navigation?.formData?.get("intent") === "update";
+  const isDeleting = navigation?.formData?.get("intent") === "delete";
 
   return (
     <main className="mx-auto max-w-4xl">
@@ -120,7 +129,7 @@ export default function PostSlug() {
             value="delete"
             className="rounded bg-red-500 py-2 px-4 text-white hover:bg-red-600 focus:bg-red-400 disabled:bg-red-300"
           >
-            {"delete Post"}
+            {isDeleting ? "delerting..." : "delete Post"}
           </button>
           <button
             type="submit"
@@ -128,7 +137,7 @@ export default function PostSlug() {
             value="update"
             className="rounded bg-blue-500 py-2 px-4 text-white hover:bg-blue-600 focus:bg-blue-400 disabled:bg-blue-300"
           >
-            {"Edit Post"}
+            {isUpdating ? "updating..." : "Update post"}
           </button>
         </div>
       </Form>
